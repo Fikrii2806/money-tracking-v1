@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- Mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <title>Money Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen" class="login-container">
+  <div class="card login-card">
+    <h2>Login</h2>
+    <input
+      type="text"
+      id="usernameInput"
+      placeholder="Enter username"
+      autocomplete="off"
+    />
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" style="display:none;">
+  <div class="container">
+    <h1>Money Tracker</h1>
+    <p class="subtitle">Uang Panas & Uang Dingin</p>
+
+    <div class="card">
+      <h2>Salary Period</h2>
+      <input type="number" id="salaryPanas" placeholder="Uang Panas" />
+      <input type="number" id="salaryDingin" placeholder="Uang Dingin" />
+      <button onclick="confirmNewPeriod()">Confirm New Period</button>
+    </div>
+
+    <div class="card">
+      <h2>Add Expense</h2>
+      <input type="text" id="expenseName" placeholder="Expense name" />
+      <input type="number" id="expenseAmount" placeholder="Amount" />
+      <select id="expenseType">
+        <option value="panas">Uang Panas</option>
+        <option value="dingin">Uang Dingin</option>
+      </select>
+      <button onclick="addExpense()">Add Expense</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Uang Panas</h3>
+        <p>Salary: Rp <span id="panasSalary">0</span></p>
+        <p>Expenses: Rp <span id="panasExpense">0</span></p>
+        <p class="bold">Remaining: Rp <span id="panasRemaining">0</span></p>
+      </div>
+
+      <div class="card">
+        <h3>Uang Dingin</h3>
+        <p>Salary: Rp <span id="dinginSalary">0</span></p>
+        <p>Expenses: Rp <span id="dinginExpense">0</span></p>
+        <p class="bold">Remaining: Rp <span id="dinginRemaining">0</span></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Expense History</h2>
+      <ul id="expenseList" class="expense-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FIREBASE SDK ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>
