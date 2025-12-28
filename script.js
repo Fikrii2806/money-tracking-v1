@@ -3,9 +3,9 @@
 ======================= */
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
+  apiKey: "AIzaSyCGK2M6c-uw2QjjWMAeR9fFKLKdT38NYsU",
+  authDomain: "money-tracker-fd4f0.firebaseapp.com",
+  projectId: "money-tracker-fd4f0"
 };
 
 let auth = null;
