@@ -1,5 +1,5 @@
 /* =======================
-   FIREBASE INIT
+   FIREBASE SAFE INIT
 ======================= */
 
 const firebaseConfig = {
@@ -8,10 +8,16 @@ const firebaseConfig = {
   projectId: "YOUR_PROJECT_ID"
 };
 
-firebase.initializeApp(firebaseConfig);
+let auth = null;
+let db = null;
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+try {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+} catch (e) {
+  console.warn("Firebase unavailable, running local only");
+}
 
 /* =======================
    GLOBAL STATE
@@ -22,7 +28,7 @@ let periods = [];
 let activePeriodId = null;
 
 /* =======================
-   STORAGE (LOCAL)
+   LOCAL STORAGE
 ======================= */
 
 function storageKey() {
@@ -47,18 +53,20 @@ function loadLocal() {
 }
 
 /* =======================
-   STORAGE (CLOUD)
+   CLOUD STORAGE
 ======================= */
 
 async function saveCloud() {
-  if (!currentUser) return;
-
-  await db.collection("users")
-    .doc(currentUser)
-    .set({ periods, activePeriodId, updatedAt: Date.now() });
+  if (!db || !currentUser) return;
+  await db.collection("users").doc(currentUser).set({
+    periods,
+    activePeriodId,
+    updatedAt: Date.now()
+  });
 }
 
 async function loadCloud() {
+  if (!db) return false;
   const doc = await db.collection("users").doc(currentUser).get();
   if (!doc.exists) return false;
 
@@ -69,15 +77,15 @@ async function loadCloud() {
 }
 
 /* =======================
-   UTILITIES
+   HELPERS
 ======================= */
 
 function nowISO() {
   return new Date().toISOString();
 }
 
-function formatDate(date) {
-  return new Date(date).toLocaleString("en-GB", {
+function formatDate(d) {
+  return new Date(d).toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -100,16 +108,14 @@ async function login() {
 
   currentUser = username;
 
-  await auth.signInAnonymously();
+  if (auth) await auth.signInAnonymously();
 
   loginScreen.style.display = "none";
   app.style.display = "block";
 
-  const cloudLoaded = await loadCloud();
-
-  if (!cloudLoaded) {
-    loadLocal();
-  }
+  let loaded = false;
+  if (db) loaded = await loadCloud();
+  if (!loaded) loadLocal();
 
   if (!activePeriodId) {
     startNewPeriod(0, 0);
@@ -118,10 +124,6 @@ async function login() {
 
   renderAll();
 }
-
-/* =======================
-   SAVE ALL
-======================= */
 
 async function saveAll() {
   saveLocal();
@@ -147,11 +149,11 @@ function startNewPeriod(panas, dingin) {
 async function confirmNewPeriod() {
   if (!confirm("Close current period and start a new one?")) return;
 
-  const panas = parseInt(salaryPanas.value) || 0;
-  const dingin = parseInt(salaryDingin.value) || 0;
-
   getActivePeriod().endDate = nowISO();
-  startNewPeriod(panas, dingin);
+  startNewPeriod(
+    parseInt(salaryPanas.value) || 0,
+    parseInt(salaryDingin.value) || 0
+  );
 
   await saveAll();
   renderAll();
@@ -184,33 +186,28 @@ async function addExpense() {
 }
 
 /* =======================
-   SUMMARY
+   UI
 ======================= */
 
 function updateSummary() {
-  const active = getActivePeriod();
+  const a = getActivePeriod();
   let panas = 0, dingin = 0;
 
-  active.expenses.forEach(e =>
-    e.type === "panas" ? panas += e.amount : dingin += e.amount
-  );
+  a.expenses.forEach(e => {
+    e.type === "panas" ? panas += e.amount : dingin += e.amount;
+  });
 
-  panasSalary.textContent = active.salaryPanas;
+  panasSalary.textContent = a.salaryPanas;
   panasExpense.textContent = panas;
-  panasRemaining.textContent = active.salaryPanas - panas;
+  panasRemaining.textContent = a.salaryPanas - panas;
 
-  dinginSalary.textContent = active.salaryDingin;
+  dinginSalary.textContent = a.salaryDingin;
   dinginExpense.textContent = dingin;
-  dinginRemaining.textContent = active.salaryDingin - dingin;
+  dinginRemaining.textContent = a.salaryDingin - dingin;
 }
-
-/* =======================
-   HISTORY
-======================= */
 
 function renderHistory() {
   expenseList.innerHTML = "";
-
   periods.forEach(p => {
     const li = document.createElement("li");
     li.className = "period-card";
@@ -218,10 +215,6 @@ function renderHistory() {
     expenseList.appendChild(li);
   });
 }
-
-/* =======================
-   RENDER
-======================= */
 
 function renderAll() {
   updateSummary();
