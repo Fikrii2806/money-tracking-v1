@@ -168,7 +168,8 @@ async function addExpense() {
   const amount = parseInt(expenseAmount.value);
   const type = expenseType.value;
 
-  if (!name || amount <= 0) return alert("Invalid expense");
+  if (!name || isNaN(amount) || amount <= 0)
+    return alert("Invalid expense");
 
   getActivePeriod().expenses.push({
     id: crypto.randomUUID(),
@@ -181,6 +182,35 @@ async function addExpense() {
   expenseName.value = "";
   expenseAmount.value = "";
 
+  await saveAll();
+  renderAll();
+}
+
+/* ✏️ EDIT EXPENSE VALUE */
+async function editExpense(periodId, expenseId) {
+  const period = periods.find(p => p.id === periodId);
+  const expense = period.expenses.find(e => e.id === expenseId);
+
+  const input = prompt(
+    `Edit value for "${expense.name}"`,
+    expense.amount
+  );
+
+  if (input === null) return;
+
+  const newAmount = parseInt(input);
+  if (isNaN(newAmount) || newAmount <= 0)
+    return alert("Invalid amount");
+
+  expense.amount = newAmount;
+  await saveAll();
+  renderAll();
+}
+
+/* ❌ DELETE EXPENSE */
+async function deleteExpense(periodId, expenseId) {
+  const period = periods.find(p => p.id === periodId);
+  period.expenses = period.expenses.filter(e => e.id !== expenseId);
   await saveAll();
   renderAll();
 }
@@ -206,13 +236,52 @@ function updateSummary() {
   dinginRemaining.textContent = a.salaryDingin - dingin;
 }
 
+/* =======================
+   HISTORY (FIXED)
+======================= */
+
 function renderHistory() {
   expenseList.innerHTML = "";
+
   periods.forEach(p => {
-    const li = document.createElement("li");
-    li.className = "period-card";
-    li.innerHTML = `<strong>${formatDate(p.startDate)}</strong>`;
-    expenseList.appendChild(li);
+    const card = document.createElement("li");
+    card.className = "period-card";
+
+    card.innerHTML = `
+      <div class="period-header">
+        <strong>
+          ${formatDate(p.startDate)} →
+          ${p.endDate ? formatDate(p.endDate) : "Present"}
+        </strong>
+      </div>
+    `;
+
+    p.expenses.forEach(e => {
+      const row = document.createElement("div");
+      row.className = "expense-item";
+
+      row.innerHTML = `
+        <div class="expense-info">
+          <div class="expense-name">${e.name} — Rp ${e.amount}</div>
+          <div class="expense-meta">
+            <span class="badge ${e.type === "panas" ? "badge-panas" : "badge-dingin"}">
+              ${e.type}
+            </span>
+            <span class="expense-date">${formatDate(e.date)}</span>
+          </div>
+        </div>
+        <div class="expense-actions">
+          <button class="delete-btn"
+            onclick="editExpense('${p.id}','${e.id}')">Edit</button>
+          <button class="delete-btn"
+            onclick="deleteExpense('${p.id}','${e.id}')">✕</button>
+        </div>
+      `;
+
+      card.appendChild(row);
+    });
+
+    expenseList.appendChild(card);
   });
 }
 
